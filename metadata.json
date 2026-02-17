@@ -1,0 +1,7 @@
+{
+  "name": "Ethereal Vows - Planificador de Bodas",
+  "description": "Una herramienta híbrida estilo Notion-Excel para la organización de bodas con sugerencias por IA, seguimiento de presupuesto y gestión de estados por colores.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
