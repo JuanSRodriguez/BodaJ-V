@@ -14,8 +14,11 @@ export const uploadFile = async (file: File, path: string): Promise<string> => {
         const downloadURL = await getDownloadURL(snapshot.ref);
         console.log("File uploaded successfully, URL:", downloadURL);
         return downloadURL;
-    } catch (error) {
-        console.error("Error uploading file to Firebase Storage:", error);
+    } catch (error: any) {
+        console.error("Firebase Storage Error Code:", error.code);
+        console.error("Firebase Storage Error Message:", error.message);
+        console.error("Full Error Object:", JSON.stringify(error, null, 2));
         throw error;
     }
+
 };

@@ -319,10 +319,10 @@ const App: React.FC = () => {
 
   return (
     <div className={`app-container ${isMobileMenuOpen ? 'mobile-menu-active' : ''}`}>
-      {/* Ethereal Background Elements */}
-      <div className="ethereal-bg">
-        <div className="ethereal-blob w-[500px] h-[500px] bg-rose-500/10 top-[-10%] left-[-5%]" />
-        <div className="ethereal-blob w-[400px] h-[400px] bg-indigo-500/10 bottom-[10%] right-[5%] blur-[150px]" />
+      {/* Juan&Vale Background Elements */}
+      <div className="jv-bg">
+        <div className="jv-blob w-[500px] h-[500px] bg-rose-500/10 top-[-10%] left-[-5%]" />
+        <div className="jv-blob w-[400px] h-[400px] bg-indigo-500/10 bottom-[10%] right-[5%] blur-[150px]" />
       </div>
 
       <div
@@ -378,19 +378,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {viewMode === 'checklist' && (
-              <button
-                onClick={handleAiAsk}
-                disabled={isAiLoading}
-                className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-500 border glass ${isAiLoading
-                  ? 'text-white/20 border-white/5 cursor-not-allowed'
-                  : 'text-rose-400 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/40 hover:scale-105 active:scale-95'
-                  }`}
-              >
-                <span className="w-4 h-4 flex items-center justify-center">{isAiLoading ? '⌛' : '✨'}</span>
-                <span className="hidden sm:inline">{isAiLoading ? 'Analyzing...' : 'AI Insights'}</span>
-              </button>
-            )}
+
             <button
               onClick={renderGlobalAddButton().props.onClick}
               className="button-modern"
@@ -402,8 +390,9 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 lg:p-16 relative">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-[100dvh] custom-scrollbar p-5 lg:p-16 relative pb-32">
           {aiSuggestions.length > 0 && viewMode === 'checklist' && (
+
             <div className="mb-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in">
               {aiSuggestions.map((s, idx) => (
                 <div key={idx} className="card-premium p-8 bg-gradient-to-br from-white/5 to-transparent border-white/10 flex flex-col justify-between group">

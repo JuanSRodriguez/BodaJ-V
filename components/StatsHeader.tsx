@@ -19,7 +19,8 @@ export const StatsHeader: React.FC<StatsHeaderProps> = ({ stats }) => {
   const remaining = (stats.totalBudgetLimit || 1) - stats.spentAmount;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-10">
+
       {/* Progress Card */}
       <div className="card-premium p-8 bg-white/5 border-white/10 group relative">
         <div className="absolute top-0 right-0 w-32 h-32 bg-rose-500/10 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:bg-rose-500/20 transition-all duration-700" />

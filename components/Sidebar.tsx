@@ -2,6 +2,8 @@ import React, { useRef, useState } from 'react';
 import { WeddingStats } from '../types';
 import { ViewMode } from '../App';
 import { uploadFile } from '../services/storageService';
+import { auth } from '../services/firebase';
+
 
 interface SidebarProps {
   stats: WeddingStats;
@@ -35,17 +37,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!auth.currentUser) {
+        alert("Debes iniciar sesión con Google para subir imágenes por razones de seguridad.");
+        return;
+      }
       setIsUploading(true);
       try {
         const url = await uploadFile(file, `profile/couple_${Date.now()}`);
         setCoupleImage(url);
-      } catch (error) {
-        console.error("Upload failed:", error);
-        alert("Error al subir la imagen. Por favor, inténtalo de nuevo.");
+      } catch (error: any) {
+        console.error("Upload failed details:", error);
+        alert(`Error al subir la imagen: ${error.message || 'Error desconocido'}`);
       } finally {
         setIsUploading(false);
       }
     }
+
   };
 
   const NavItem = ({ mode, label, icon }: { mode: ViewMode, label: string, icon: string }) => (
@@ -100,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
           <div>
-            <h1 className="font-serif text-2xl font-black text-white tracking-tight leading-none mb-1">Ethereal</h1>
+            <h1 className="font-serif text-2xl font-black text-white tracking-tight leading-none mb-1">Juan&Vale</h1>
             <p className="text-[10px] text-rose-400 font-black uppercase tracking-[0.4em]">Wedding Atelier</p>
           </div>
         </div>

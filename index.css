@@ -158,11 +158,12 @@ h4,
 
 /* Layout Utilities */
 .app-container {
-  height: 100vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100vw;
   display: flex;
   background: radial-gradient(circle at top left, #120c14, #030303);
-  overflow: hidden;
+  position: relative;
 }
 
 .main-content {
@@ -172,10 +173,12 @@ h4,
   position: relative;
   z-index: 10;
   min-width: 0;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Ethereal Background Elements */
-.ethereal-bg {
+
+/* Juan&Vale Background Elements */
+.jv-bg {
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -183,7 +186,8 @@ h4,
   overflow: hidden;
 }
 
-.ethereal-blob {
+.jv-blob {
+
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
