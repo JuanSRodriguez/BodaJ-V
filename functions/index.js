@@ -13,7 +13,7 @@ setGlobalOptions({
   memory: '256MiB'
 });
 
-const resend = new Resend('re_TZqvNsc7_MWRosfvsp3d4vbF91ekEAJy9');
+const resend = new Resend(process.env.RESEND_API_KEY || 'KEY_NOT_SET');
 
 /**
  * Lógica principal para enviar el resumen de tareas

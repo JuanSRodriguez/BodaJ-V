@@ -3,10 +3,11 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { WeddingTask } from "../types";
 
 export const getAISuggestions = async (currentTasks: WeddingTask[], weddingTheme: string) => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  
+  const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY });
+
+
   const tasksSummary = currentTasks.map(t => `${t.title} (${t.status})`).join(", ");
-  
+
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Basándote en estas tareas de boda existentes: ${tasksSummary} y el tema "${weddingTheme}", ¿qué 5 elementos críticos faltan en mi planificador? Responde en ESPAÑOL como un array JSON de objetos con "title", "category" y "reason". Usa categorías estándar de bodas.`,
