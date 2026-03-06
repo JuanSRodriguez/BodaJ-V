@@ -3,6 +3,9 @@ import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getStorage } from "firebase/storage";
+import { getAI, GoogleAIBackend } from "firebase/ai";
+
+
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -22,9 +25,14 @@ const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 const db = getFirestore(app, "jvtemporal");
 const auth = getAuth(app);
 const storage = getStorage(app);
+const ai = getAI(app, { backend: new GoogleAIBackend() });
+
+
 const googleProvider = new GoogleAuthProvider();
 googleProvider.addScope('https://www.googleapis.com/auth/calendar.events');
 
-console.log("Firebase initialized successfully");
+console.log("Firebase initialized successfully with AI Logic");
 
-export { app, analytics, db, auth, storage, googleProvider };
+export { app, analytics, db, auth, storage, ai, googleProvider };
+
+

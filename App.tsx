@@ -9,9 +9,12 @@ import { GuestManager } from './components/GuestManager';
 import { TimelineView } from './components/TimelineView';
 import { SeatingPlan } from './components/SeatingPlan';
 import { VowsAssistant } from './components/VowsAssistant';
+import { StatsHeader } from './components/StatsHeader';
 import { WeddingTask, TaskStatus, TaskCategory, WeddingStats, Guest, TimelineItem, Table } from './types';
 import { INITIAL_TASKS } from './constants';
 import { getAISuggestions } from './services/gemini';
+import { AIWeddingChatbot } from './components/AIWeddingChatbot';
+
 
 import { saveWeddingData, subscribeToWeddingData } from './services/weddingService';
 
@@ -36,6 +39,7 @@ const App: React.FC = () => {
   const [weddingDate, setWeddingDate] = useState('2025-06-21');
   const [weddingTheme, setWeddingTheme] = useState('Jardín Romántico Moderno');
   const [vows, setVows] = useState('');
+  const [totalBudgetLimit, setTotalBudgetLimit] = useState(0);
 
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isCreatingNewTask, setIsCreatingNewTask] = useState(false);
@@ -44,6 +48,7 @@ const App: React.FC = () => {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | 'ALL'>('ALL');
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const skipNextSnapshot = useRef(false);
@@ -58,13 +63,16 @@ const App: React.FC = () => {
       }
       if (data) {
         console.log("Loading data from Firestore:", data);
+
         setTasks(data.tasks || INITIAL_TASKS);
         setGuests(data.guests || []);
+
         setTimeline(data.timeline || []);
         setTables(data.tables || []);
         setWeddingDate(data.weddingDate || '2025-06-21');
         setWeddingTheme(data.weddingTheme || 'Jardín Romántico Moderno');
         setVows(data.vows || '');
+        setTotalBudgetLimit(data.totalBudgetLimit || 0);
         setCoupleImage(data.coupleImage || null);
       } else {
         console.log("No data found in Firestore, using current state (initial).");
@@ -90,13 +98,14 @@ const App: React.FC = () => {
         timeline,
         tables,
         vows,
+        totalBudgetLimit,
         coupleImage,
         updatedAt: Date.now()
       });
-    }, 1000); // Debounce saves
+    }, 400); // Reduced debounce for snappier feel
 
     return () => clearTimeout(timeoutId);
-  }, [tasks, guests, timeline, tables, weddingDate, weddingTheme, vows, coupleImage, isInitialLoad]);
+  }, [tasks, guests, timeline, tables, weddingDate, weddingTheme, vows, totalBudgetLimit, coupleImage, isInitialLoad]);
 
   const stats = useMemo<WeddingStats>(() => {
     const today = new Date();
@@ -109,9 +118,17 @@ const App: React.FC = () => {
       completedTasks: tasks.filter(t => t.status === TaskStatus.DONE).length,
       totalBudget: tasks.reduce((sum, t) => sum + (t.budget || 0), 0),
       spentAmount: tasks.reduce((sum, t) => sum + (t.actualCost || 0), 0),
-      daysRemaining: daysRemaining > 0 ? daysRemaining : 0
+      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+      totalBudgetLimit
     };
-  }, [tasks, weddingDate]);
+  }, [tasks, weddingDate, totalBudgetLimit]);
+
+  const filteredTasks = useMemo(() => {
+    if (statusFilter === 'ALL') return tasks.filter(t => !t.isReminder);
+
+    return tasks.filter(t => t.status === statusFilter && !t.isReminder);
+  }, [tasks, statusFilter]);
+
 
   const selectedTask = useMemo(() => {
     if (isCreatingNewTask) return draftTask;
@@ -140,7 +157,29 @@ const App: React.FC = () => {
     }
   }, [viewMode]);
 
+  // Cleanup past reminders automatically
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setTasks(prevTasks => {
+        const now = new Date();
+        const validTasks = prevTasks.filter(task => {
+          if (task.isReminder && task.dueDate && task.time) {
+            const [hours, minutes] = task.time.split(':').map(Number);
+            const [year, month, day] = task.dueDate.split('-').map(Number);
+            const taskDateTime = new Date(year, month - 1, day, hours, minutes);
+            if (taskDateTime < now) return false;
+          }
+          return true;
+        });
+        if (validTasks.length !== prevTasks.length) return validTasks;
+        return prevTasks;
+      });
+    }, 60000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   const handleConfirmTaskCreation = (newTask: WeddingTask) => {
+
     setTasks(prev => [newTask, ...prev]);
     setIsCreatingNewTask(false);
     setDraftTask(null);
@@ -231,7 +270,29 @@ const App: React.FC = () => {
     setViewMode('seating');
   }, [tables.length]);
 
+  const handleChatbotAddTask = (title: string, date: string, time: string, notes: string) => {
+    const newTask: WeddingTask = {
+      id: generateId(),
+      title,
+      category: TaskCategory.OTHER,
+      status: TaskStatus.TODO,
+      budget: 0,
+      actualCost: 0,
+      dueDate: date,
+      time: time,
+      isReminder: true,
+      notes,
+      color: '#f3f4f6',
+      icon: '✨',
+      supplier: ''
+    };
+    setTasks(prev => [newTask, ...prev]);
+  };
+
   const renderGlobalAddButton = () => {
+
+
+
     let label = "Nueva Tarea";
     let action = handleAddTask;
 
@@ -258,10 +319,17 @@ const App: React.FC = () => {
 
   return (
     <div className={`app-container ${isMobileMenuOpen ? 'mobile-menu-active' : ''}`}>
+      {/* Ethereal Background Elements */}
+      <div className="ethereal-bg">
+        <div className="ethereal-blob w-[500px] h-[500px] bg-rose-500/10 top-[-10%] left-[-5%]" />
+        <div className="ethereal-blob w-[400px] h-[400px] bg-indigo-500/10 bottom-[10%] right-[5%] blur-[150px]" />
+      </div>
+
       <div
         className={`sidebar-overlay ${isMobileMenuOpen ? 'active' : ''}`}
         onClick={() => setIsMobileMenuOpen(false)}
       ></div>
+
       <Sidebar
         stats={stats}
         viewMode={viewMode}
@@ -279,127 +347,182 @@ const App: React.FC = () => {
       />
 
       <main className="main-content">
-        <header className="h-[80px] lg:h-[100px] flex items-center justify-between px-6 lg:px-12 glass sticky top-0 z-30 border-b border-stone-800/50">
-          <div className="flex items-center gap-4 lg:gap-6">
+        <header className="h-[90px] lg:h-[110px] flex items-center justify-between px-8 lg:px-16 glass sticky top-0 z-30 border-b border-white/5">
+          <div className="flex items-center gap-6">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden w-10 h-10 flex flex-col items-center justify-center gap-1.5 text-stone-300 hover:text-white transition-colors"
+              className="lg:hidden w-12 h-12 flex flex-col items-center justify-center gap-1.5 text-white/50 hover:text-white transition-colors glass rounded-xl border-white/5"
             >
               <span className="w-6 h-0.5 bg-current rounded-full"></span>
-              <span className="w-6 h-0.5 bg-current rounded-full"></span>
+              <span className="w-4 h-0.5 bg-current rounded-full self-start ml-3"></span>
               <span className="w-6 h-0.5 bg-current rounded-full"></span>
             </button>
-            <div className="hidden lg:block w-1.5 h-10 bg-stone-50 rounded-full shadow-lg shadow-black/20"></div>
-            <div>
-              <h2 className="text-[10px] lg:text-xs font-black uppercase tracking-[0.4em] text-stone-500 mb-0.5 lg:mb-1">
-                Espacio de Trabajo / {viewMode}
-              </h2>
-              <h1 className="text-lg lg:text-xl font-serif font-black text-stone-50 italic tracking-tight">
-                {viewMode === 'checklist' && 'Gestión de Tareas'}
-                {viewMode === 'budget' && 'Control Presupuestario'}
-                {viewMode === 'calendar' && 'Calendario de Hitos'}
-                {viewMode === 'guests' && 'Lista de Invitados'}
-                {viewMode === 'timeline' && 'Cronograma del Evento'}
-                {viewMode === 'seating' && 'Plano de Mesas'}
-                {viewMode === 'vows' && 'Votos Matrimoniales'}
+
+            <div className="flex flex-col">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" />
+                <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/30">
+                  Workspace / {viewMode}
+                </h2>
+              </div>
+              <h1 className="text-xl lg:text-2xl font-serif font-black text-white italic tracking-tight">
+                {viewMode === 'checklist' && 'Checklist Management'}
+                {viewMode === 'budget' && 'Financial Control'}
+                {viewMode === 'calendar' && 'Milestone Calendar'}
+                {viewMode === 'guests' && 'Guest Experience'}
+                {viewMode === 'timeline' && 'Event Cronogram'}
+                {viewMode === 'seating' && 'Atmosphere & Seating'}
+                {viewMode === 'vows' && 'Vows of Love'}
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 lg:gap-6">
+          <div className="flex items-center gap-4">
             {viewMode === 'checklist' && (
               <button
                 onClick={handleAiAsk}
                 disabled={isAiLoading}
-                className={`flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-2.5 lg:py-3 rounded-2xl text-[11px] lg:text-[12px] font-black uppercase tracking-wider transition-all duration-300 border shadow-sm ${isAiLoading
-                  ? 'bg-stone-900/50 text-stone-700 border-stone-800 cursor-not-allowed'
-                  : 'bg-rose-950/30 text-rose-400 border-rose-900/50 hover:bg-rose-500 hover:text-white hover:border-rose-500'
+                className={`flex items-center gap-3 px-6 py-3 rounded-xl text-[11px] font-black uppercase tracking-wider transition-all duration-500 border glass ${isAiLoading
+                  ? 'text-white/20 border-white/5 cursor-not-allowed'
+                  : 'text-rose-400 border-rose-500/20 hover:bg-rose-500/10 hover:border-rose-500/40 hover:scale-105 active:scale-95'
                   }`}
               >
-                <span className="lg:inline">{isAiLoading ? 'Analizando...' : '✨ Sugerencias IA'}</span>
+                <span className="w-4 h-4 flex items-center justify-center">{isAiLoading ? '⌛' : '✨'}</span>
+                <span className="hidden sm:inline">{isAiLoading ? 'Analyzing...' : 'AI Insights'}</span>
               </button>
             )}
-            {renderGlobalAddButton()}
+            <button
+              onClick={renderGlobalAddButton().props.onClick}
+              className="button-modern"
+            >
+              <span className="text-xl leading-none">+</span>
+              <span className="hidden sm:inline">{renderGlobalAddButton().props.children[2].props.children}</span>
+              <span className="sm:hidden">Add</span>
+            </button>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12 bg-stone-900/20">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 lg:p-16 relative">
           {aiSuggestions.length > 0 && viewMode === 'checklist' && (
-            <div className="mb-12 lg:mb-16 grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10 animate-fade-in">
+            <div className="mb-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fade-in">
               {aiSuggestions.map((s, idx) => (
-                <div key={idx} className="card-premium p-6 lg:p-10 flex flex-col justify-between group overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-stone-800 rounded-full -mr-16 -mt-16 transition-transform duration-700 group-hover:scale-150"></div>
+                <div key={idx} className="card-premium p-8 bg-gradient-to-br from-white/5 to-transparent border-white/10 flex flex-col justify-between group">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-rose-500/5 blur-[50px] rounded-full -mr-20 -mt-20 group-hover:bg-rose-500/10 transition-all duration-1000" />
                   <div className="relative z-10">
-                    <div className="w-10 h-10 bg-rose-950 text-rose-400 rounded-xl flex items-center justify-center text-xl mb-6 shadow-inner ring-1 ring-rose-900/50">✨</div>
-                    <h4 className="font-extrabold text-stone-50 text-base mb-4 tracking-tight group-hover:text-rose-400 transition-colors uppercase italic">{s.title}</h4>
-                    <p className="text-stone-400 text-[14px] leading-relaxed mb-8">{s.reason}</p>
+                    <div className="w-12 h-12 glass border-rose-500/20 text-rose-400 rounded-2xl flex items-center justify-center text-xl mb-8 transition-transform group-hover:rotate-12">✨</div>
+                    <h4 className="font-serif font-black text-white text-lg mb-4 tracking-tight group-hover:text-rose-400 transition-colors uppercase italic">{s.title}</h4>
+                    <p className="text-white/40 text-[14px] leading-relaxed mb-8">{s.reason}</p>
                   </div>
                   <button
                     onClick={() => addAiTask(s)}
-                    className="relative z-10 text-stone-100 font-black text-[11px] uppercase tracking-widest hover:text-rose-400 text-left flex items-center gap-3 transition-all"
+                    className="relative z-10 text-white/80 font-black text-[10px] uppercase tracking-widest hover:text-rose-400 text-left flex items-center gap-4 transition-all group/btn"
                   >
-                    <span className="w-5 h-5 bg-stone-800 text-white rounded-full flex items-center justify-center text-[10px] group-hover:bg-rose-600 transition-colors">+</span>
-                    Añadir a mi lista
+                    <div className="w-6 h-6 rounded-full glass border-white/10 flex items-center justify-center group-hover/btn:bg-rose-500 group-hover/btn:text-white transition-all">
+                      <span className="text-xs">+</span>
+                    </div>
+                    Implement Strategy
                   </button>
                 </div>
               ))}
-              <div className="flex items-center justify-center">
+              <div className="md:col-span-3 flex justify-center mt-4">
                 <button
                   onClick={() => setAiSuggestions([])}
-                  className="text-stone-600 hover:text-stone-300 text-[11px] font-black uppercase tracking-[0.3em] transition-all hover:tracking-[0.4em]"
+                  className="px-8 py-3 glass rounded-full text-[10px] font-black uppercase tracking-[0.3em] text-white/30 hover:text-white/60 transition-all hover:tracking-[0.4em]"
                 >
-                  Descartar inspiraciones
+                  Dissolve Inspirations
                 </button>
               </div>
             </div>
           )}
 
-          {viewMode === 'checklist' && (
-            <div className="animate-fade-in mb-20">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-stone-800/50 sticky top-0 z-20 border-b border-stone-800 backdrop-blur-md hidden md:table-header-group">
-                  <tr>
-                    <th className="py-8 pl-10 pr-4 w-20"></th>
-                    <th className="py-8 px-6 text-[10px] uppercase font-black text-stone-500 tracking-[0.25em] w-24">Icono</th>
-                    <th className="py-8 px-6 text-[10px] uppercase font-black text-stone-500 tracking-[0.25em]">Descripción de la Tarea</th>
-                    <th className="py-8 px-6 text-[10px] uppercase font-black text-stone-500 tracking-[0.25em] w-56">Categoría</th>
-                    <th className="py-8 px-6 text-[10px] uppercase font-black text-stone-500 tracking-[0.25em] w-48">Estado</th>
-                    <th className="py-8 px-6 text-[10px] uppercase font-black text-stone-500 tracking-[0.25em] w-40">Fecha Límite</th>
-                    <th className="py-8 px-10 text-right w-20"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-stone-800">
-                  {tasks.map((task) => (
-                    <TaskItem
-                      key={task.id}
-                      task={task}
-                      isSelected={selectedTaskId === task.id}
-                      onSelect={() => {
-                        setSelectedTaskId(task.id);
-                        setIsCreatingNewTask(false);
-                      }}
-                      onUpdate={updateTask}
-                      onDelete={deleteTask}
-                    />
-                  ))}
-                </tbody>
-              </table>
-              {tasks.length === 0 && (
-                <div className="py-40 text-center bg-stone-950/20">
-                  <span className="text-8xl block mb-10 grayscale opacity-10 animate-pulse">🥂</span>
-                  <p className="text-stone-500 font-serif italic text-2xl tracking-wide">Tu viaje comienza con un solo plan.</p>
-                  <p className="text-stone-700 text-[11px] uppercase font-black mt-4 tracking-[0.3em]">Empieza por añadir tu primera tarea</p>
-                </div>
-              )}
-            </div>
-          )}
+          <div className="view-transition">
+            {viewMode === 'checklist' && (
+              <>
+                <StatsHeader stats={stats} />
 
-          {viewMode === 'calendar' && <CalendarView tasks={tasks} />}
-          {viewMode === 'budget' && <BudgetView tasks={tasks} onUpdateTask={updateTask} selectedTaskId={selectedTaskId} />}
-          {viewMode === 'guests' && <GuestManager guests={guests} setGuests={setGuests} />}
-          {viewMode === 'timeline' && <TimelineView timeline={timeline} setTimeline={setTimeline} />}
-          {viewMode === 'seating' && <SeatingPlan guests={guests} setGuests={setGuests} tables={tables} setTables={setTables} />}
-          {viewMode === 'vows' && <VowsAssistant vows={vows} setVows={setVows} weddingTheme={weddingTheme} />}
+                <div className="flex flex-wrap items-center gap-4 mb-8">
+                  <button
+                    onClick={() => setStatusFilter('ALL')}
+                    className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === 'ALL'
+                      ? 'bg-white text-stone-950 shadow-glow'
+                      : 'glass text-white/40 hover:text-white border-white/5'}`}
+                  >
+                    Todas
+                  </button>
+                  {[TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.DONE, TaskStatus.PENDING_PAYMENT].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setStatusFilter(status)}
+                      className={`px-6 py-2.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${statusFilter === status
+                        ? 'bg-rose-500 text-white shadow-glow border-rose-500'
+                        : 'glass text-white/40 hover:text-white border-white/5'}`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="card-premium bg-white/5 border-white/10 overflow-hidden">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="bg-white/5 border-b border-white/5 backdrop-blur-xl hidden md:table-header-group">
+                      <tr>
+                        <th className="py-8 pl-10 pr-4 w-20"></th>
+                        <th className="py-8 px-6 text-[10px] uppercase font-black text-white/30 tracking-[0.3em] w-24">Icon</th>
+                        <th className="py-8 px-6 text-[10px] uppercase font-black text-white/30 tracking-[0.3em]">Strategy & Task</th>
+                        <th className="py-8 px-6 text-[10px] uppercase font-black text-white/30 tracking-[0.3em] w-56">Category</th>
+                        <th className="py-8 px-6 text-[10px] uppercase font-black text-white/30 tracking-[0.3em] w-48">Progress</th>
+                        <th className="py-8 px-6 text-[10px] uppercase font-black text-white/30 tracking-[0.3em] w-40">Timeline</th>
+                        <th className="py-8 px-10 text-right w-20"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {filteredTasks.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          isSelected={selectedTaskId === task.id}
+                          onSelect={() => {
+                            setSelectedTaskId(task.id);
+                            setIsCreatingNewTask(false);
+                          }}
+                          onUpdate={updateTask}
+                          onDelete={deleteTask}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                  {filteredTasks.length === 0 && (
+                    <div className="py-48 text-center bg-black/20">
+                      <span className="text-8xl block mb-12 grayscale opacity-10 animate-pulse">🥂</span>
+                      <p className="text-white/60 font-serif italic text-3xl tracking-wide mb-4">
+                        {statusFilter === 'ALL'
+                          ? 'Tu viaje comienza con un solo plan.'
+                          : `No se encontraron tareas con el estado "${statusFilter}".`}
+                      </p>
+                      <p className="text-rose-400 text-[10px] uppercase font-black tracking-[0.5em]">
+                        {statusFilter === 'ALL' ? 'Inicia tu primer hito' : 'Intenta ajustar tus filtros de búsqueda'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
+            {viewMode === 'calendar' && <CalendarView tasks={tasks} />}
+            {viewMode === 'budget' && (
+              <BudgetView
+                tasks={tasks}
+                onUpdateTask={updateTask}
+                selectedTaskId={selectedTaskId}
+                totalBudgetLimit={totalBudgetLimit}
+                setTotalBudgetLimit={setTotalBudgetLimit}
+              />
+            )}
+            {viewMode === 'guests' && <GuestManager guests={guests} setGuests={setGuests} />}
+            {viewMode === 'timeline' && <TimelineView timeline={timeline} setTimeline={setTimeline} />}
+            {viewMode === 'seating' && <SeatingPlan guests={guests} setGuests={setGuests} tables={tables} setTables={setTables} />}
+            {viewMode === 'vows' && <VowsAssistant vows={vows} setVows={setVows} weddingTheme={weddingTheme} />}
+          </div>
         </div>
       </main>
 
@@ -415,8 +538,22 @@ const App: React.FC = () => {
         onDelete={deleteTask}
         onConfirmCreation={handleConfirmTaskCreation}
       />
+      {/* AI Assistant Chatbot */}
+      <AIWeddingChatbot
+        tasks={tasks}
+        guests={guests}
+        tables={tables}
+        weddingDate={weddingDate}
+        weddingTheme={weddingTheme}
+        budgetLimit={totalBudgetLimit}
+        onAddTask={handleChatbotAddTask}
+      />
+
+
+
     </div>
   );
 };
+
 
 export default App;

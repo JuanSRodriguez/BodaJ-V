@@ -25,7 +25,13 @@ export interface WeddingTask {
   budget: number;
   actualCost: number;
   dueDate: string;
+  time?: string;
+  isReminder?: boolean;
   notes: string;
+
+
+
+
   color: string;
   icon: string;
   supplier?: string;
@@ -63,6 +69,7 @@ export interface WeddingStats {
   totalBudget: number;
   spentAmount: number;
   daysRemaining: number;
+  totalBudgetLimit: number;
 }
 
 export interface WeddingData {
@@ -74,5 +81,6 @@ export interface WeddingData {
   guests: Guest[];
   timeline: TimelineItem[];
   tables: Table[];
+  totalBudgetLimit?: number;
   updatedAt: number;
 }

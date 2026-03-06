@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Guest, Table } from '../types';
 
@@ -43,48 +42,50 @@ export const SeatingPlan: React.FC<SeatingPlanProps> = ({ guests, setGuests, tab
   const guestsWithoutTable = guests.filter(g => !g.tableId && g.confirmed);
 
   return (
-    <div className="space-y-12 animate-fade-in pb-40">
+    <div className="space-y-12 view-transition pb-40">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        <div>
-          <h2 className="text-3xl lg:text-4xl font-serif font-black text-stone-50 italic tracking-tight">Distribución Espacial</h2>
-          <p className="text-stone-500 text-sm mt-2 font-medium">Armonizando almas y conversaciones en tu celebración.</p>
+        <div className="flex flex-col">
+          <h2 className="text-2xl lg:text-4xl font-serif font-black text-white italic tracking-tight mb-2">Spatial Orchestration</h2>
+          <p className="text-[11px] font-black uppercase tracking-[0.4em] text-white/30 px-1">Harmonizing souls / Architecture of connection</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4 glass p-3 sm:p-2 rounded-2xl border border-stone-800 shadow-xl shadow-black/40 w-full lg:w-auto">
+
+        <div className="flex flex-col sm:flex-row gap-4 glass p-4 rounded-3xl border border-white/5 shadow-2xl w-full lg:w-auto">
           <input
             value={tableName}
             onChange={(e) => setTableName(e.target.value)}
-            placeholder="Nombra tu mesa (Ej: Orión, Venecia)..."
-            className="flex-1 bg-stone-950 border border-stone-800 rounded-xl px-6 py-4 sm:py-3 text-sm font-bold text-stone-100 focus:outline-none focus:ring-4 focus:ring-rose-500/10 lg:w-72 transition-all placeholder:text-stone-700"
+            placeholder="Name your space (e.g. Orion, Venice)..."
+            className="flex-1 glass bg-white/5 border-white/10 rounded-2xl px-6 py-4 text-[14px] font-bold text-white focus:outline-none focus:ring-1 focus:ring-rose-500/30 lg:w-80 transition-all placeholder:text-white/10"
             onKeyPress={(e) => e.key === 'Enter' && addTable()}
           />
           <button
             onClick={addTable}
-            className="bg-stone-50 text-stone-900 px-8 py-4 sm:py-3 rounded-xl text-[12px] font-black uppercase tracking-widest hover:bg-white transition-all active:scale-95 shadow-lg shadow-black/20"
+            className="bg-white text-stone-950 px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] shadow-[0_20px_40px_rgba(0,0,0,0.4)] active:scale-95 transition-all hover:bg-rose-50 hover:shadow-glow"
           >
-            Añadir Espacio
+            Design Space
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
-        <div className="lg:col-span-1 glass p-6 lg:p-10 rounded-[2rem] lg:rounded-[2.5rem] border border-stone-800 shadow-premium lg:sticky lg:top-32">
-          <h3 className="text-[10px] font-black text-stone-500 uppercase tracking-[0.3em] mb-6 lg:mb-8 flex items-center justify-between">
-            Esperando Ubicación
-            <span className="bg-rose-950/40 text-rose-400 px-3 py-1 rounded-full text-[11px] font-black shadow-inner ring-1 ring-rose-900/50">{guestsWithoutTable.length}</span>
+        <div className="lg:col-span-1 glass p-8 lg:p-10 rounded-[3rem] border border-white/5 shadow-2xl lg:sticky lg:top-32 overflow-hidden relative group">
+          <div className="absolute inset-0 bg-rose-500/[0.01] blur-[60px] group-hover:bg-rose-500/[0.03] transition-all duration-1000" />
+          <h3 className="text-[10px] font-black text-white/20 uppercase tracking-[0.4em] mb-10 flex items-center justify-between relative z-10">
+            Awaiting Placement
+            <span className="bg-rose-500/10 text-rose-400 px-4 py-1.5 rounded-full text-[11px] font-black shadow-[0_0_20px_rgba(244,63,94,0.2)] border border-rose-500/20">{guestsWithoutTable.length}</span>
           </h3>
-          <div className="space-y-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+          <div className="space-y-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2 relative z-10">
             {guestsWithoutTable.length === 0 ? (
-              <div className="text-center py-20 text-stone-600 italic font-serif text-sm">Cada alma ha encontrado su lugar.</div>
+              <div className="text-center py-24 text-white/10 italic font-serif text-lg tracking-tight">Every soul has found its place.</div>
             ) : (
               guestsWithoutTable.map(guest => (
-                <div key={guest.id} className="bg-stone-900 p-5 rounded-2xl border border-stone-800 shadow-sm flex items-center justify-between group hover:border-rose-900/50 hover:shadow-black/60 transition-all">
-                  <span className="text-[13px] font-bold text-stone-200 tracking-tight">{guest.name}</span>
+                <div key={guest.id} className="glass bg-white/5 p-5 rounded-2xl border border-white/5 shadow-sm flex items-center justify-between group/guest hover:border-rose-500/30 hover:bg-white/[0.08] transition-all duration-500">
+                  <span className="text-[14px] font-bold text-white/60 group-hover/guest:text-white tracking-tight transition-colors">{guest.name}</span>
                   <select
                     onChange={(e) => assignTable(guest.id, e.target.value)}
                     value=""
-                    className="text-[9px] font-black uppercase tracking-widest bg-stone-800 border-none rounded-xl px-3 py-1.5 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all cursor-pointer hover:bg-stone-700 text-stone-300"
+                    className="text-[9px] font-black uppercase tracking-[0.15em] bg-stone-900 border-none rounded-xl px-4 py-2 opacity-0 group-hover/guest:opacity-100 focus:opacity-100 transition-all cursor-pointer hover:bg-stone-800 text-white shadow-2xl"
                   >
-                    <option value="" disabled className="bg-stone-900">Ubicación...</option>
+                    <option value="" disabled className="bg-stone-900">Place at...</option>
                     {tables.map(t => <option key={t.id} value={t.id} className="bg-stone-900">{t.name}</option>)}
                   </select>
                 </div>
@@ -95,9 +96,10 @@ export const SeatingPlan: React.FC<SeatingPlanProps> = ({ guests, setGuests, tab
 
         <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-10">
           {tables.length === 0 ? (
-            <div className="col-span-full py-40 text-center bg-stone-900/50 border-2 border-dashed border-stone-800 rounded-[4rem] flex flex-col items-center">
-              <span className="text-8xl mb-10 grayscale opacity-10 animate-pulse">🏛️</span>
-              <p className="text-stone-500 font-serif italic text-2xl tracking-wide">Comienza a diseñar tu plano añadiendo mesas.</p>
+            <div className="col-span-full py-48 text-center glass border-dashed border-white/5 rounded-[4rem] flex flex-col items-center bg-white/[0.01] shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-indigo-500/[0.01] blur-[150px] group-hover:bg-indigo-500/[0.03] transition-all duration-1000" />
+              <span className="text-8xl mb-12 grayscale opacity-5 group-hover:opacity-10 group-hover:grayscale-0 transition-all duration-1000 animate-pulse relative z-10">🏛️</span>
+              <p className="text-white/20 font-serif italic text-2xl tracking-tight relative z-10">Begin designing your spatial layout by adding spaces.</p>
             </div>
           ) : (
             tables.map(table => {
@@ -106,44 +108,44 @@ export const SeatingPlan: React.FC<SeatingPlanProps> = ({ guests, setGuests, tab
               const isFull = occupancy >= table.capacity;
 
               return (
-                <div key={table.id} className="card-premium p-10 relative group overflow-hidden border-none hover:shadow-2xl transition-all duration-700 shadow-black/60">
-                  <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 transition-all duration-700 group-hover:scale-150 ${isFull ? 'bg-rose-950/20' : 'bg-emerald-950/20'}`}></div>
+                <div key={table.id} className="card-premium p-10 relative group overflow-hidden border-white/5 hover:border-white/10 hover:shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8)] transition-all duration-700">
+                  <div className={`absolute top-0 right-0 w-48 h-48 rounded-full -mr-24 -mt-24 transition-all duration-1000 group-hover:scale-125 ${isFull ? 'bg-rose-500/[0.05] blur-[40px]' : 'bg-emerald-500/[0.05] blur-[40px]'}`}></div>
 
-                  <div className="relative z-10 space-y-6 lg:space-y-8">
-                    <div className="flex lg:items-center justify-between border-b border-stone-800 pb-4 lg:pb-6 gap-4">
-                      <div>
-                        <h4 className="font-serif font-black text-stone-50 text-xl lg:text-2xl italic tracking-tight group-hover:text-rose-400 transition-colors uppercase">{table.name}</h4>
-                        <div className="flex items-center gap-3 mt-2">
-                          <div className={`w-2 h-2 rounded-full ${isFull ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`}></div>
-                          <p className={`text-[10px] font-black uppercase tracking-widest ${isFull ? 'text-rose-400' : 'text-stone-500'}`}>
-                            {occupancy} / {table.capacity} Capacidad
+                  <div className="relative z-10 space-y-10">
+                    <div className="flex lg:items-center justify-between border-b border-white/5 pb-6 gap-6">
+                      <div className="flex flex-col">
+                        <h4 className="font-serif font-black text-white text-2xl italic tracking-tight group-hover:text-rose-400 transition-colors uppercase mb-1">{table.name}</h4>
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.4)] transition-all duration-500 ${isFull ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500'}`}></div>
+                          <p className={`text-[10px] font-black uppercase tracking-[0.2em] transition-colors duration-500 ${isFull ? 'text-rose-500' : 'text-white/20'}`}>
+                            {occupancy} / {table.capacity} Occupancy
                           </p>
                         </div>
                       </div>
                       <button
                         onClick={() => removeTable(table.id)}
-                        className="p-3 text-stone-700 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-rose-950/30 rounded-2xl"
+                        className="w-10 h-10 flex items-center justify-center text-white/10 hover:text-rose-400 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-500 hover:bg-rose-500/10 rounded-xl border border-transparent hover:border-rose-500/20 shadow-none hover:shadow-glow"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       {tableGuests.map(guest => (
-                        <div key={guest.id} className="bg-stone-950 px-4 py-3 rounded-2xl border border-stone-800 hover:border-stone-700 hover:bg-stone-900 hover:shadow-lg transition-all flex items-center justify-between group/item">
-                          <span className="text-[12px] font-bold text-stone-200 truncate tracking-tight">{guest.name}</span>
+                        <div key={guest.id} className="glass bg-white/5 px-4 py-3.5 rounded-2xl border border-white/5 hover:border-white/20 hover:bg-white/10 hover:shadow-2xl transition-all duration-500 flex items-center justify-between group/item">
+                          <span className="text-[13px] font-bold text-white/50 group-hover/item:text-white truncate tracking-tight transition-colors">{guest.name}</span>
                           <button
                             onClick={() => assignTable(guest.id, undefined)}
-                            className="w-5 h-5 flex items-center justify-center text-stone-600 hover:text-rose-400 opacity-0 group-hover/item:opacity-100 transition-all transform scale-150 leading-none"
-                            title="Remove guest"
+                            className="w-6 h-6 flex items-center justify-center text-white/10 hover:text-rose-400 opacity-0 group-hover/item:opacity-100 transition-all transform hover:scale-150 leading-none text-xl"
+                            title="Unseat Guest"
                           >
                             ×
                           </button>
                         </div>
                       ))}
                       {occupancy < table.capacity && (
-                        <div className="border-2 border-dashed border-stone-800 rounded-2xl flex items-center justify-center text-stone-700 text-[10px] font-black uppercase tracking-widest min-h-[44px]">
-                          Open Slot
+                        <div className="border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-white/10 text-[9px] font-black uppercase tracking-[0.3em] min-h-[50px] group-hover:border-white/20 group-hover:text-white/20 transition-all duration-700">
+                          Available Slot
                         </div>
                       )}
                     </div>
